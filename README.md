@@ -13,6 +13,7 @@ Lisp interpreter written in Kotlin (under development)
 - cdr
 - +
 - = (number comparison)
+- quit
 
 ## Special forms
 
