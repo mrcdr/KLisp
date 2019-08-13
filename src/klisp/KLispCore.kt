@@ -38,6 +38,28 @@ fun initEnv(): KLispEnv {
         }
     })
 
+    env.add(KLispSymbol("car"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            if(args.size != 1) {
+                throw KLispException("Invalid argument", "car")
+            }
+
+            val list = args[0] as? KLispList ?: throw KLispException("Argument must be list", "car")
+            return list.car()
+        }
+    })
+
+    env.add(KLispSymbol("cdr"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            if(args.size != 1) {
+                throw KLispException("Invalid argument", "cdr")
+            }
+
+            val list = args[0] as? KLispList ?: throw KLispException("Argument must be list", "cdr")
+            return list.cdr()
+        }
+    })
+
     env.add(KLispSymbol("="), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
             if(args.size == 0) {
