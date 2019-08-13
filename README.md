@@ -11,7 +11,7 @@ Lisp interpreter written in Kotlin (under development)
 - list
 - car
 - cdr
-- +
+- \+
 - = (number comparison)
 - quit
 
