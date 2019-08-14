@@ -1,20 +1,17 @@
 package klisp
 
-import klisp.KLispReader.Companion.NUMBER_REGEX
-import klisp.KLispReader.Companion.STRING_REGEX
-import klisp.KLispReader.Companion.SYMBOL_REGEX
-
 class KLispReader(input: String) {
     companion object {
         val TOKEN_REGEX = Regex("""[\s]*(,@|[()'`,]|"(?:\\.|[^\\"])*"|;.*|[^\s()'`,";]*)""")
         // remove space; paren and reader macro |  string literal | comment | appearance
-        val NUMBER_REGEX = Regex("""(^[+-]?[0-9]+\.?[0-9]*$)""")
+        val FRACTION_REGEX = Regex("""(^[+-]?[0-9]+(?:/[0-9]+)?$)""")
+        val FLOAT_REGEX = Regex("""(^[+-]?[0-9]+\.?[0-9]*$)""")
         val STRING_REGEX = Regex(""""((?:\\.|[^\\"])*)"""")
         val SYMBOL_REGEX = Regex("""(^.*)""")
 
         fun tokenize(input: String): Sequence<String> {
             return TOKEN_REGEX.findAll(input)
-                    .map{ it -> it.groups[1]?.value as String }
+                    .map{ it.groups[1]?.value as String }
                     .filter{ it != "" && !it.startsWith(";")}
         }
     }
@@ -47,10 +44,11 @@ fun readAtom(reader: KLispReader): KLispSexp {
     val token = reader.next() ?: throw KLispException("readAtom null")
 
     return when {
-        NUMBER_REGEX.matches(token) -> KLispDouble(token.toDouble())
-        STRING_REGEX.matches(token) -> KLispString(token.substring(1, token.lastIndex)) // remove double quotes
+        KLispReader.FRACTION_REGEX.matches(token) -> KLispFraction(token)
+        KLispReader.FLOAT_REGEX.matches(token) -> KLispDouble(token.toDouble())
+        KLispReader.STRING_REGEX.matches(token) -> KLispString(token.substring(1, token.lastIndex)) // remove double quotes
         token == "(" -> readList(reader)
-        SYMBOL_REGEX.matches(token) -> {
+        KLispReader.SYMBOL_REGEX.matches(token) -> {
             when(token) {
                 KLispSymbol.T.toString() -> KLispSymbol.T
                 KLispList.NIL.toString() -> KLispList.NIL

@@ -1,16 +1,14 @@
 package klisp
 
-class KLispEnv() {
-    private var symbolTable = emptyMap<KLispSymbol, KLispSexp>() // Lisp1 i.e. this includes lambdas
+class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
+    constructor() : this(mutableMapOf<KLispSymbol, KLispSexp>())
 
-    constructor(env: KLispEnv) : this() {
-        this.symbolTable = env.symbolTable
-    }
+    constructor(env: KLispEnv) : this(env.symbolTable)
 
     constructor(env: KLispEnv, local_vars: List<KLispSymbol>, local_values: KLispList) : this(env) {
         for(i in 0 until local_vars.size) {
             val symbol = local_vars[i]
-            if(symbol.appearance == "&rest") {
+            if(symbol.toString() == "&rest") {
                 if(i == local_vars.size - 1) {
                     throw KLispException("Bind end with &rest")
                 }
@@ -24,14 +22,14 @@ class KLispEnv() {
     }
 
     fun apply(symbol: KLispSymbol): KLispSexp {
-        return symbolTable[symbol] ?: throw KLispException("Symbol '${symbol.appearance}' not found")
+        return symbolTable[symbol] ?: throw KLispException("Symbol '$symbol' not found")
     }
 
     fun apply(list: KLispList): KLispSexp {
         val head = list.car()
 
         return if(head is KLispSymbol) {
-            when(head.appearance) {
+            when(head.toString()) {
                 "lambda" -> parseLambda(list.cdr())
                 "define" -> parseDefine(list.cdr())
                 "let" -> parseLet(list.cdr())

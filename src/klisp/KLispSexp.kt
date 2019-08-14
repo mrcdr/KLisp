@@ -1,12 +1,16 @@
 package klisp
 
+import kotlin.math.absoluteValue
+
 abstract class KLispSexp {
     abstract fun eval(env: KLispEnv): KLispSexp
 }
 
-abstract class KLispAtom(open val appearance: String) : KLispSexp()
+abstract class KLispAtom(protected val appearance: String) : KLispSexp() {
+    override fun toString() = appearance
+}
 
-open class KLispSymbol(override val appearance: String) : KLispAtom(appearance) {
+open class KLispSymbol(appearance: String) : KLispAtom(appearance) {
     companion object {
         val T = object : KLispSymbol("t") {
             override fun eval(env: KLispEnv): KLispSexp {
@@ -34,11 +38,59 @@ abstract class KLispValue(appearance: String) : KLispAtom(appearance) {
     override fun eval(env: KLispEnv) = this
 }
 
-abstract class KLispNumber(appearance: String) : KLispValue(appearance)
+sealed class KLispNumber(appearance: String) : KLispValue(appearance) {
+    abstract operator fun plus(other: KLispNumber): KLispNumber
+}
+
+class KLispFraction(appearance: String) : KLispNumber(appearance) {
+    val numerator: Long
+    val denominator: Long
+
+    init {
+        val split = appearance.split("/")
+        val numeratorTmp = split[0].toLong()
+        val denominatorTmp = if(split.size == 2) split[1].toLong() else 1L
+
+        val gcd = KLispUtil.gcd(numeratorTmp.absoluteValue, denominatorTmp.absoluteValue)
+        val sign = if(numeratorTmp * denominatorTmp >= 0) 1L else -1L
+
+        numerator = sign * numeratorTmp.absoluteValue / gcd
+        denominator = denominatorTmp.absoluteValue / gcd
+    }
+
+    constructor(numerator: Long, denominator: Long)
+            : this("$numerator/$denominator") // duplicated conversion
+
+    override fun toString(): String {
+        return if(this.isInteger()) {
+            "$numerator"
+        } else {
+            "$numerator/$denominator"
+        }
+    }
+
+    override operator fun plus(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> KLispFraction(this.numerator * other.denominator + other.numerator * this.denominator,
+                    this.denominator * other.denominator)
+            is KLispDouble -> KLispDouble(other.value + this.numerator.toDouble()/this.denominator.toDouble())
+        }
+    }
+
+    fun isInteger() = (denominator == 1L)
+}
+
 
 class KLispDouble(val value: Double) : KLispNumber(value.toString()) {
     override fun toString(): String {
         return value.toString()
+    }
+
+    override operator fun plus(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> other + this
+            is KLispDouble -> KLispDouble(this.value + other.value)
+        }
     }
 }
 

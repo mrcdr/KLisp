@@ -25,10 +25,10 @@ fun initEnv(): KLispEnv {
     env.add(KLispSymbol("a"), KLispDouble(1.0))
     env.add(KLispSymbol("+"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            val x = args[0] as? KLispDouble ?: throw KLispException("Not a Number", "+")
-            val y = args[1] as? KLispDouble ?: throw KLispException("Not a Number", "+")
+            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "+")
+            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "+")
 
-            return KLispDouble(x.value + y.value)
+            return x + y
         }
     })
 
