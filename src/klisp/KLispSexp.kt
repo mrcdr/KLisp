@@ -69,6 +69,14 @@ class KLispFraction(appearance: String) : KLispNumber(appearance) {
         }
     }
 
+    override fun equals(other: Any?) = ((other is KLispFraction) &&
+            (this.numerator == other.numerator) &&
+            (this.denominator == other.denominator))
+
+    override fun hashCode(): Int {
+        return this.numerator.hashCode() + this.denominator.hashCode()
+    }
+
     override operator fun plus(other: KLispNumber): KLispNumber {
         return when(other) {
             is KLispFraction -> KLispFraction(this.numerator * other.denominator + other.numerator * this.denominator,
@@ -85,6 +93,10 @@ class KLispDouble(val value: Double) : KLispNumber(value.toString()) {
     override fun toString(): String {
         return value.toString()
     }
+
+    override fun equals(other: Any?) = (other is KLispDouble) && (this.value == other.value)
+
+    override fun hashCode() = value.hashCode()
 
     override operator fun plus(other: KLispNumber): KLispNumber {
         return when(other) {

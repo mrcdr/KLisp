@@ -26,7 +26,7 @@ Lisp interpreter written in Kotlin (under development)
 ## Data types
 
 - symbol
-- number (floating point)
+- number (fraction / floating point)
 - string
 - list
 - lambda

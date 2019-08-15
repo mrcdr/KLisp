@@ -11,7 +11,7 @@ fun eval(input: String, env: KLispEnv): KLispSexp {
 fun initEnv(): KLispEnv {
     val env = KLispEnv()
 
-    // In lisp, eval runs in the null lexical environment
+    // In lisp, eval runs in null lexical environment
     env.add(KLispSymbol("eval"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
             if(args.size != 1) {
@@ -29,6 +29,25 @@ fun initEnv(): KLispEnv {
             val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "+")
 
             return x + y
+        }
+    })
+
+    env.add(KLispSymbol("="), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            if(args.size == 0) {
+                throw KLispException("No argument", "=")
+            }
+            val num = args[0] as? KLispNumber ?: throw KLispException("Not a number", "=")
+
+            return args.all {
+                (it as? KLispNumber ?: throw KLispException("Not a number", "=")) == num
+            }.let {
+                if(it) {
+                    KLispSymbol.T
+                } else {
+                    KLispList.NIL
+                }
+            }
         }
     })
 
@@ -57,25 +76,6 @@ fun initEnv(): KLispEnv {
 
             val list = args[0] as? KLispList ?: throw KLispException("Argument must be list", "cdr")
             return list.cdr()
-        }
-    })
-
-    env.add(KLispSymbol("="), object : KLispLambda() {
-        override fun invoke(args: KLispList): KLispSexp {
-            if(args.size == 0) {
-                throw KLispException("No argument", "=")
-            }
-            val num = (args[0] as? KLispDouble ?: throw KLispException("Not a number", "=")).value
-
-            return args.all {
-                (it as? KLispDouble ?: throw KLispException("Not a number", "=")).value == num
-            }.let {
-                if(it) {
-                    KLispSymbol.T
-                } else {
-                    KLispList.NIL
-                }
-            }
         }
     })
 
