@@ -40,6 +40,9 @@ abstract class KLispValue(appearance: String) : KLispAtom(appearance) {
 
 sealed class KLispNumber(appearance: String) : KLispValue(appearance) {
     abstract operator fun plus(other: KLispNumber): KLispNumber
+    abstract operator fun minus(other: KLispNumber): KLispNumber
+    abstract operator fun times(other: KLispNumber): KLispNumber
+    abstract operator fun div(other: KLispNumber): KLispNumber
 }
 
 class KLispFraction(appearance: String) : KLispNumber(appearance) {
@@ -81,7 +84,29 @@ class KLispFraction(appearance: String) : KLispNumber(appearance) {
         return when(other) {
             is KLispFraction -> KLispFraction(this.numerator * other.denominator + other.numerator * this.denominator,
                     this.denominator * other.denominator)
-            is KLispDouble -> KLispDouble(other.value + this.numerator.toDouble()/this.denominator.toDouble())
+            is KLispDouble -> KLispDouble(this.numerator.toDouble()/this.denominator.toDouble() + other.value)
+        }
+    }
+
+    override operator fun minus(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> KLispFraction(this.numerator * other.denominator - other.numerator * this.denominator,
+                    this.denominator * other.denominator)
+            is KLispDouble -> KLispDouble(this.numerator.toDouble()/this.denominator.toDouble() - other.value)
+        }
+    }
+
+    override operator fun times(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> KLispFraction(this.numerator * other.numerator, this.denominator * other.denominator)
+            is KLispDouble -> KLispDouble(this.numerator.toDouble()/this.denominator.toDouble() * other.value)
+        }
+    }
+
+    override operator fun div(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> KLispFraction(this.numerator * other.denominator, this.denominator * other.numerator)
+            is KLispDouble -> KLispDouble(this.numerator.toDouble()/this.denominator.toDouble() / other.value)
         }
     }
 
@@ -102,6 +127,27 @@ class KLispDouble(val value: Double) : KLispNumber(value.toString()) {
         return when(other) {
             is KLispFraction -> other + this
             is KLispDouble -> KLispDouble(this.value + other.value)
+        }
+    }
+
+    override operator fun minus(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> KLispDouble(this.value - other.numerator.toDouble()/other.denominator.toDouble())
+            is KLispDouble -> KLispDouble(this.value - other.value)
+        }
+    }
+
+    override operator fun times(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> other * this
+            is KLispDouble -> KLispDouble(this.value * other.value)
+        }
+    }
+
+    override operator fun div(other: KLispNumber): KLispNumber {
+        return when(other) {
+            is KLispFraction -> KLispDouble(this.value * other.denominator / other.numerator)
+            is KLispDouble -> KLispDouble(this.value / other.value)
         }
     }
 }

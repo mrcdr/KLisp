@@ -32,6 +32,33 @@ fun initEnv(): KLispEnv {
         }
     })
 
+    env.add(KLispSymbol("-"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "-")
+            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "-")
+
+            return x - y
+        }
+    })
+
+    env.add(KLispSymbol("*"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "*")
+            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "*")
+
+            return x * y
+        }
+    })
+
+    env.add(KLispSymbol("/"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "/")
+            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "/")
+
+            return x / y
+        }
+    })
+
     env.add(KLispSymbol("="), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
             if(args.size == 0) {
