@@ -64,6 +64,8 @@ class KLispFraction(appearance: String) : KLispNumber(appearance) {
     constructor(numerator: Long, denominator: Long)
             : this("$numerator/$denominator") // duplicated conversion
 
+    constructor(integer: Long) : this(integer, 1L)
+
     override fun toString(): String {
         return if(this.isInteger()) {
             "$numerator"

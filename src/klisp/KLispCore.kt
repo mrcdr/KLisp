@@ -25,37 +25,47 @@ fun initEnv(): KLispEnv {
     env.add(KLispSymbol("a"), KLispDouble(1.0))
     env.add(KLispSymbol("+"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "+")
-            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "+")
-
-            return x + y
+            return args.fold(KLispFraction(0)) { acc: KLispNumber, elem: KLispSexp ->
+                acc + (elem as? KLispNumber ?: throw KLispException("Not a Number", "+"))
+            }
         }
     })
 
     env.add(KLispSymbol("-"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "-")
-            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "-")
-
-            return x - y
+            return when(args.size) {
+                0 -> throw KLispException("No argument", "-")
+                1 -> KLispFraction(-1) * (args[0] as? KLispNumber ?: throw KLispException("Not a Number", "-"))
+                else -> {
+                    val first = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "-")
+                    args.subList(1).fold(first) { acc: KLispNumber, elem: KLispSexp ->
+                        acc - (elem as? KLispNumber ?: throw KLispException("Not a Number", "-"))
+                    }
+                }
+            }
         }
     })
 
     env.add(KLispSymbol("*"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "*")
-            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "*")
-
-            return x * y
+            return args.fold(KLispFraction(1)) { acc: KLispNumber, elem: KLispSexp ->
+                acc * (elem as? KLispNumber ?: throw KLispException("Not a Number", "*"))
+            }
         }
     })
 
     env.add(KLispSymbol("/"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            val x = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "/")
-            val y = args[1] as? KLispNumber ?: throw KLispException("Not a Number", "/")
-
-            return x / y
+            return when(args.size) {
+                0 -> throw KLispException("No argument", "/")
+                1 -> KLispFraction(1) / (args[0] as? KLispNumber ?: throw KLispException("Not a Number", "/"))
+                else -> {
+                    val first = args[0] as? KLispNumber ?: throw KLispException("Not a Number", "/")
+                    args.subList(1).fold(first) { acc: KLispNumber, elem: KLispSexp ->
+                        acc / (elem as? KLispNumber ?: throw KLispException("Not a Number", "/"))
+                    }
+                }
+            }
         }
     })
 
