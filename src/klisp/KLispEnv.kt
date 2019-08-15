@@ -70,6 +70,10 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
         }
 
         val symbol = args[0] as? KLispSymbol ?: throw KLispException("Not a appearance", "define")
+        if(this.hasSymbol(symbol)) {
+            throw KLispException("Symbol '$symbol' already exists", "define")
+        }
+
         val value = args[1].eval(this)
 
         this.add(symbol, value)
@@ -155,4 +159,6 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
     fun add(symbol: KLispSymbol, value: KLispSexp) {
         symbolTable += symbol to value
     }
+
+    fun hasSymbol(symbol: KLispSymbol) = this.symbolTable.containsKey(symbol)
 }
