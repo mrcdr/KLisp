@@ -47,7 +47,7 @@ fun readAtom(reader: KLispReader): KLispSexp {
         KLispReader.FRACTION_REGEX.matches(token) -> KLispFraction(token)
         KLispReader.FLOAT_REGEX.matches(token) -> KLispDouble(token.toDouble())
         KLispReader.STRING_REGEX.matches(token) -> KLispString(token.substring(1, token.lastIndex)) // remove double quotes
-        token == "(" -> readList(reader)
+        token == "'" -> KLispCons.createList(listOf(KLispSymbol("quote"), readForm(reader)))
         KLispReader.SYMBOL_REGEX.matches(token) -> {
             when(token) {
                 KLispSymbol.T.toString() -> KLispSymbol.T
