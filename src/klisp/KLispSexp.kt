@@ -197,7 +197,7 @@ abstract class KLispList : KLispSexp(), Iterable<KLispSexp> {
 
         while(current != NIL) {
             list.add(current.car())
-            current = current.cdr() as? KLispList ?: throw KLispException("Invalid list")
+            current = current.cdr() as? KLispList ?: throw KLispException("Not a null ended list")
         }
 
         return KLispSeqList.createList(list)

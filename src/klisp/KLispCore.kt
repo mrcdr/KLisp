@@ -22,6 +22,16 @@ fun initEnv(): KLispEnv {
         }
     })
 
+    env.add(KLispSymbol("atom?"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            if(args.size() != 1) {
+                throw KLispException("Invalid argument", "atom?")
+            }
+
+            return if(args[0] is KLispAtom) KLispSymbol.T else KLispList.NIL
+        }
+    })
+
     env.add(KLispSymbol("a"), KLispDouble(1.0))
     env.add(KLispSymbol("+"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
@@ -125,6 +135,18 @@ fun initEnv(): KLispEnv {
             return list.cdr()
         }
     })
+
+    env.add(KLispSymbol("len"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            if(args.size() != 1) {
+                throw KLispException("Invalid argument", "len")
+            }
+
+            return KLispFraction((args[0] as? KLispList ?: throw KLispException("Not a list", "len")).size().toLong())
+        }
+    })
+
+
 
     env.add(KLispSymbol("quit"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
