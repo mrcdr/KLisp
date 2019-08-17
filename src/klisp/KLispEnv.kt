@@ -29,12 +29,13 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
         val head = list.car()
 
         return if(head is KLispSymbol) {
+            val args = list.cdr() as? KLispList ?: throw KLispException("arguments must be list", head.toString())
             when(head.toString()) {
-                "lambda" -> parseLambda(list.cdr())
-                "define" -> parseDefine(list.cdr())
-                "let" -> parseLet(list.cdr())
-                "if" -> parseIf(list.cdr())
-                "quote" -> parseQuote(list.cdr())
+                "lambda" -> parseLambda(args)
+                "define" -> parseDefine(args)
+                "let" -> parseLet(args)
+                "if" -> parseIf(args)
+                "quote" -> parseQuote(args)
                 else -> applyFunction(list)
             }
         } else {
@@ -44,14 +45,16 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
 
     private fun applyFunction(list: KLispList): KLispSexp {
         val func = list.car().eval(this) as? KLispLambda ?: throw KLispException("Not a function object")
-        return func(KLispList.createList(list.cdr().map { it.eval(this) }))
+        val args = list.cdr() as? KLispList ?: throw KLispException("lambda arguments must be list")
+
+        return func(KLispCons.createList(args.map { it.eval(this) }))
     }
 
     private fun parseLambda(args: KLispList): KLispLambda {
-        val argList = (args[0] as? KLispList ?: throw KLispException("Not a parameter list"))
+        val argList = (args.car() as? KLispList ?: throw KLispException("Not a parameter list"))
         val varList = argList.filterIsInstance<KLispSymbol>()
 
-        if(argList.size != varList.size) {
+        if(argList.size() != varList.size) {
             throw KLispException("Invalid parameter list")
         }
 
@@ -65,11 +68,11 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
     }
 
     private fun parseDefine(args: KLispList): KLispSymbol {
-        if(args.size != 2) {
+        if(args.size() != 2) {
             throw KLispException("Invalid number of arguments", "define")
         }
 
-        val symbol = args[0] as? KLispSymbol ?: throw KLispException("Not a appearance", "define")
+        val symbol = args.car() as? KLispSymbol ?: throw KLispException("Not a appearance", "define")
         if(this.hasSymbol(symbol)) {
             throw KLispException("Symbol '$symbol' already exists", "define")
         }
@@ -82,7 +85,7 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
     }
 
     private fun parseLet(args: KLispList): KLispSexp {
-        if(args.size < 1) {
+        if(args.size() < 1) {
             throw KLispException("Too few arguments")
         }
 
@@ -97,7 +100,7 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
                 }
 
                 is KLispList -> {
-                    when(bind.size) {
+                    when(bind.size()) {
                         0 -> throw KLispException("Nil cannot be bound")
                         1 -> localEnv.add((bind[0] as? KLispSymbol
                                 ?: throw KLispException("Invalid appearance", bind[0].toString())), KLispList.NIL)
@@ -114,11 +117,11 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
             }
         }
 
-        return when(args.size) {
+        return when(args.size()) {
             1 -> KLispList.NIL
             else -> {
                 var result: KLispSexp = KLispList.NIL
-                for(clause in args.subList(1)) {
+                for(clause in (args.cdr() as KLispList)) { // size is greater than 1
                     result = clause.eval(localEnv)
                 }
                 result
@@ -127,7 +130,7 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
     }
 
     private fun parseIf(list: KLispList): KLispSexp {
-        return when(list.size) {
+        return when(list.size()) {
             2 -> {
                 if(list[0].eval(this) != KLispList.NIL) {
                     list[1].eval(this)
@@ -149,7 +152,7 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
     }
 
     private fun parseQuote(args: KLispList): KLispSexp {
-        if(args.size != 1) {
+        if(args.size() != 1) {
             throw KLispException("Too few arguments", "quote")
         }
 

@@ -14,7 +14,7 @@ fun initEnv(): KLispEnv {
     // In lisp, eval runs in null lexical environment
     env.add(KLispSymbol("eval"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            if(args.size != 1) {
+            if(args.size() != 1) {
                 throw KLispException("Invalid argument", "eval")
             }
 
@@ -33,7 +33,7 @@ fun initEnv(): KLispEnv {
 
     env.add(KLispSymbol("-"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            return when(args.size) {
+            return when(args.size()) {
                 0 -> throw KLispException("No argument", "-")
                 1 -> KLispFraction(-1) * (args[0] as? KLispNumber ?: throw KLispException("Not a Number", "-"))
                 else -> {
@@ -56,7 +56,7 @@ fun initEnv(): KLispEnv {
 
     env.add(KLispSymbol("/"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            return when(args.size) {
+            return when(args.size()) {
                 0 -> throw KLispException("No argument", "/")
                 1 -> KLispFraction(1) / (args[0] as? KLispNumber ?: throw KLispException("Not a Number", "/"))
                 else -> {
@@ -71,7 +71,7 @@ fun initEnv(): KLispEnv {
 
     env.add(KLispSymbol("="), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            if(args.size == 0) {
+            if(args.size() == 0) {
                 throw KLispException("No argument", "=")
             }
             val num = args[0] as? KLispNumber ?: throw KLispException("Not a number", "=")
@@ -88,6 +88,16 @@ fun initEnv(): KLispEnv {
         }
     })
 
+    env.add(KLispSymbol("cons"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            if(args.size() != 2) {
+                throw KLispException("Invalid argument", "cons")
+            }
+
+            return KLispCons(args[0], args[1])
+        }
+    })
+
     env.add(KLispSymbol("list"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
             return args
@@ -96,7 +106,7 @@ fun initEnv(): KLispEnv {
 
     env.add(KLispSymbol("car"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            if(args.size != 1) {
+            if(args.size() != 1) {
                 throw KLispException("Invalid argument", "car")
             }
 
@@ -107,7 +117,7 @@ fun initEnv(): KLispEnv {
 
     env.add(KLispSymbol("cdr"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
-            if(args.size != 1) {
+            if(args.size() != 1) {
                 throw KLispException("Invalid argument", "cdr")
             }
 

@@ -1,5 +1,6 @@
 package klisp
 
+import java.lang.IndexOutOfBoundsException
 import kotlin.math.absoluteValue
 
 abstract class KLispSexp {
@@ -161,40 +162,69 @@ class KLispString(private val str: String) : KLispValue(str) {
     }
 }
 
-open class KLispList private constructor(private val list: List<KLispSexp>) : KLispSexp(), Iterable<KLispSexp> {
+abstract class KLispList : KLispSexp(), Iterable<KLispSexp> {
     companion object {
-        val NIL = object : KLispList(emptyList()) {
+        val NIL = object : KLispList() {
             override fun eval(env: KLispEnv) = this
             override fun car() = this
             override fun cdr() = this
+            override fun size() = 0
+            override fun get(at: Int) = this
+            override fun subList(start: Int) = this
+
+            override fun iterator() = object : Iterator<KLispSexp> {
+                override fun hasNext() = false
+                override fun next(): KLispSexp {
+                    throw NoSuchElementException("Invalid iterator for $this")
+                }
+            }
 
             override fun toString() = "nil"
         }
 
+
+    }
+
+    abstract fun car(): KLispSexp
+    abstract fun cdr(): KLispSexp
+    abstract fun size(): Int
+    abstract operator fun get(at: Int): KLispSexp
+    abstract fun subList(start: Int): KLispList
+
+    fun toSeqList(): KLispList {
+        var current: KLispList = this
+        val list = mutableListOf<KLispSexp>()
+
+        while(current != NIL) {
+            list.add(current.car())
+            current = current.cdr() as? KLispList ?: throw KLispException("Invalid list")
+        }
+
+        return KLispSeqList.createList(list)
+    }
+}
+
+open class KLispSeqList private constructor(private val list: List<KLispSexp>) : KLispList() {
+    companion object {
         fun createList(list: List<KLispSexp>): KLispList {
             return if(list.isEmpty()) {
                 NIL
             } else {
-                KLispList(list)
+                KLispSeqList(list)
             }
         }
     }
+
 
     override fun eval(env: KLispEnv): KLispSexp {
         return env.apply(this)
     }
 
-    fun subList(start: Int) = createList(list.subList(start, list.size))
-
-    open fun car() = list[0]
-    open fun cdr() = subList(1)
-
-    operator fun get(at: Int) = list[at]
-
-    val size: Int
-    get() {
-        return list.size
-    }
+    override fun car() = list[0]
+    override fun cdr() = subList(1)
+    override fun size() = list.size
+    override operator fun get(at: Int) = list[at]
+    override fun subList(start: Int) = createList(list.subList(start, list.size))
 
     override fun iterator() = list.iterator()
 
@@ -212,6 +242,120 @@ open class KLispList private constructor(private val list: List<KLispSexp>) : KL
     }
 }
 
-abstract class KLispLambda : KLispValue("lambda") {
+open class KLispCons(private val car: KLispSexp, private val cdr: KLispSexp) : KLispList() {
+    companion object {
+        fun createList(list: List<KLispSexp>): KLispList {
+            return if(list.isEmpty()) {
+                NIL
+            } else {
+                list.reversed().fold(NIL) { acc: KLispList, elem: KLispSexp ->
+                    KLispCons(elem, acc)
+                }
+            }
+        }
+    }
+
+    override fun eval(env: KLispEnv): KLispSexp {
+        return env.apply(this)
+    }
+
+    override fun car() = car
+    override fun cdr() = cdr
+
+    override fun size(): Int {
+        var size = 0
+
+        val iter = this.iterator()
+        while(iter.hasNext()) {
+            iter.next()
+            size++
+        }
+
+        return size
+    }
+
+    override fun get(at: Int): KLispSexp {
+        var currentPosition = 0
+
+        val iter = this.iterator()
+        while(iter.hasNext()) {
+            val item = iter.next()
+            if(currentPosition == at) {
+                return item
+            }
+            currentPosition++
+        }
+
+        throw IndexOutOfBoundsException()
+    }
+
+    override fun subList(start: Int): KLispList {
+        var currentPosition = 0
+        var currentCons: KLispList = this
+
+        while(currentCons != NIL) {
+            if(currentPosition == start) {
+                return currentCons
+            }
+
+            currentCons = currentCons.cdr() as? KLispList ?: throw KLispException("Invalid list")
+            currentPosition++
+        }
+
+        throw IndexOutOfBoundsException()
+    }
+
+    override fun iterator() = KLispConsIterator(this)
+
+    override fun toString(): String {
+        val builder = StringBuilder()
+        builder.append("(")
+
+        var currentCons = this
+        while(true) {
+            builder.append(currentCons.car())
+            builder.append(" ")
+
+            val cdr = currentCons.cdr()
+
+            if(cdr == NIL) {
+                break
+            } else if(cdr is KLispCons) {
+                currentCons = cdr
+            } else {
+                builder.append(". ")
+                builder.append(currentCons.cdr().toString())
+                builder.append(" ")
+                break
+            }
+        }
+
+        builder.setLength(builder.length-1) // remove last space
+        builder.append(")")
+
+        return builder.toString()
+    }
+}
+
+class KLispConsIterator(private var currentHead: KLispList) : Iterator<KLispSexp> {
+    override fun hasNext() = currentHead != KLispList.NIL
+
+    override fun next(): KLispSexp {
+        val item = currentHead.car()
+        currentHead = currentHead.cdr() as? KLispList ?: throw KLispException("Invalid list")
+
+        return item
+    }
+}
+
+abstract class KLispLambda : KLispValue("lambda #$lambdaNumber") {
+    companion object {
+        private var lambdaNumber = 0
+    }
+
     abstract operator fun invoke(args: KLispList): KLispSexp
+
+    init {
+        lambdaNumber++
+    }
 }

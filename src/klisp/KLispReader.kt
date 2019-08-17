@@ -76,5 +76,5 @@ fun readList(reader: KLispReader): KLispList {
         }
     } while (form != null)
 
-    return KLispList.createList(list)
+    return KLispCons.createList(list)
 }
