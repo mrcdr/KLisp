@@ -27,26 +27,26 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
 
     fun apply(list: KLispList): KLispSexp {
         val head = list.car()
+        val args = list.cdr() as? KLispList ?: throw KLispException("arguments must be list", head.toString())
 
         return if(head is KLispSymbol) {
-            val args = list.cdr() as? KLispList ?: throw KLispException("arguments must be list", head.toString())
             when(head.toString()) {
                 "lambda" -> parseLambda(args)
                 "define" -> parseDefine(args)
                 "let" -> parseLet(args)
                 "if" -> parseIf(args)
                 "quote" -> parseQuote(args)
-                else -> applyFunction(list)
+                else -> {
+                    applyFunction(head, args)
+                }
             }
         } else {
-            applyFunction(list)
+            applyFunction(head, list)
         }
     }
 
-    private fun applyFunction(list: KLispList): KLispSexp {
-        val func = list.car().eval(this) as? KLispLambda ?: throw KLispException("Not a function object")
-        val args = list.cdr() as? KLispList ?: throw KLispException("lambda arguments must be list")
-
+    fun applyFunction(head: KLispSexp, args: KLispList): KLispSexp {
+        val func = head.eval(this) as? KLispLambda ?: throw KLispException("Not a function object")
         return func(KLispCons.createList(args.map { it.eval(this) }))
     }
 

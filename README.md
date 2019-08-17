@@ -8,11 +8,15 @@ Lisp interpreter written in Kotlin (under development)
 ## Functions
 
 - eval
+- apply
+- cons
 - list
 - car
 - cdr
 - \+ \- \* /
 - = (number comparison)
+- len (length of list)
+- atom?
 - quit
 
 ## Special forms
@@ -21,7 +25,7 @@ Lisp interpreter written in Kotlin (under development)
 - define
 - let
 - if
-- quote (not ')
+- quote
 
 ## Data types
 
@@ -35,3 +39,6 @@ Lisp interpreter written in Kotlin (under development)
 
 - t (boolean true)
 - nil (boolean false and empty list)
+
+## Reader macros
+- ' (quote)

@@ -22,6 +22,19 @@ fun initEnv(): KLispEnv {
         }
     })
 
+    env.add(KLispSymbol("apply"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            if(args.size() != 2) {
+                throw KLispException("Invalid argument", "apply")
+            }
+
+            val func = args[0] as? KLispLambda ?: throw KLispException("Invalid function", "apply")
+            val argList = args[1] as? KLispList ?: throw KLispException("Invalid argument list", "apply")
+
+            return env.applyFunction(func, argList)
+        }
+    })
+
     env.add(KLispSymbol("atom?"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
             if(args.size() != 1) {
