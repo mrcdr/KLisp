@@ -41,7 +41,7 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
                 }
             }
         } else {
-            applyFunction(head, list)
+            applyFunction(head, args)
         }
     }
 
