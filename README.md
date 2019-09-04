@@ -42,3 +42,6 @@ Lisp interpreter written in Kotlin (under development)
 
 ## Reader macros
 - ' (quote)
+- \` (quasiquote)
+- , (unquote)
+- ,@ (unquote-splice)
