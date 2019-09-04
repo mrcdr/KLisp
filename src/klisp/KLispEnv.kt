@@ -35,7 +35,9 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
                 "define" -> parseDefine(args)
                 "let" -> parseLet(args)
                 "if" -> parseIf(args)
-                "quote" -> parseQuote(args)
+                KLispReader.QUOTE -> parseQuote(args)
+                KLispReader.QUASIQUOTE -> parseQuasiQuote(args)
+                KLispReader.UNQUOTE, KLispReader.UNQUOTE_SPLICE -> throw KLispException("Illegal unquote")
                 else -> {
                     applyFunction(head, args)
                 }
@@ -46,7 +48,7 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
     }
 
     fun applyFunction(head: KLispSexp, args: KLispList): KLispSexp {
-        val func = head.eval(this) as? KLispLambda ?: throw KLispException("Not a function object")
+        val func = head.eval(this) as? KLispLambda ?: throw KLispException("Not a function object", "$head")
         return func(KLispCons.createList(args.map { it.eval(this) }))
     }
 
@@ -157,6 +159,141 @@ class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
         }
 
         return args[0]
+    }
+
+    private fun parseQuasiQuote(args: KLispList): KLispSexp {
+        if(args.size() != 1) {
+            throw KLispException("Invalid quasi-quote")
+        }
+
+        val expanded = expandQuasiQuote(args[0], 0)
+        return expanded.eval(this)
+    }
+
+    private fun expandQuasiQuote(form: KLispSexp, depth: Int): KLispSexp {
+        val quasiquote = KLispReader.QUASIQUOTE
+        val unquote = KLispReader.UNQUOTE
+        val unquoteSplice = KLispReader.UNQUOTE_SPLICE
+
+        return if(form is KLispList && form != KLispList.NIL) {
+            val head = form.car()
+            if(head is KLispSymbol) {
+                when (head.toString()) {
+                    quasiquote -> KLispCons.createList(
+                            KLispSymbol("cons"),
+                            KLispSymbol(quasiquote).quote(),
+                            expandQuasiQuote(form.cdr(), depth+1)
+                    )
+
+                    unquote -> {
+                        when {
+                            depth > 0 -> KLispCons.createList(
+                                    KLispSymbol("cons"),
+                                    form.car().quote(),
+                                    expandQuasiQuote(form.cdr(), depth-1)
+                            )
+
+                            else -> (form.cdr() as? KLispList ?: throw KLispException("Invalid unquote")).car()
+                        }
+                    }
+
+                    unquoteSplice -> {
+                        when {
+                            depth > 0 -> KLispCons.createList(
+                                    KLispSymbol("cons"),
+                                    form.car().quote(),
+                                    expandQuasiQuote(form.cdr(), depth-1)
+                            )
+                            else -> throw KLispException("Invalid unquote-splicing")
+                        }
+                    }
+                    else -> KLispCons.createList(
+                            KLispSymbol("append"),
+                            expandQuasiQuoteList(form.car(), depth),
+                            expandQuasiQuote(form.cdr(), depth)
+                    )
+                }
+            } else {
+                KLispCons.createList(
+                        KLispSymbol("append"),
+                        expandQuasiQuoteList(form.car(), depth),
+                        expandQuasiQuote(form.cdr(), depth)
+                )
+            }
+        } else {
+            form.quote()
+        }
+    }
+
+    private fun expandQuasiQuoteList(form: KLispSexp, depth: Int): KLispList {
+        val quasiquote = KLispReader.QUASIQUOTE
+        val unquote = KLispReader.UNQUOTE
+        val unquoteSplice = KLispReader.UNQUOTE_SPLICE
+
+        return if(form is KLispList && form != KLispList.NIL) {
+            val head = form.car()
+            if(head is KLispSymbol) {
+                when (head.toString()) {
+                    quasiquote -> KLispCons.createList(
+                            KLispSymbol("list"),
+                            KLispCons.createList(
+                                    KLispSymbol("cons"),
+                                    KLispSymbol(quasiquote).quote(),
+                                    expandQuasiQuote(form.cdr(), depth+1)
+                            )
+                    )
+
+                    unquote -> {
+                        when {
+                            depth > 0 -> KLispCons.createList(
+                                    KLispSymbol("list"),
+                                    KLispCons.createList(
+                                            KLispSymbol("cons"),
+                                            form.car().quote(),
+                                            expandQuasiQuote(form.cdr(), depth-1)
+                                    )
+                            )
+
+                            else -> KLispCons(KLispSymbol("list"), form.cdr())
+                        }
+                    }
+
+                    unquoteSplice -> {
+                        when {
+                            depth > 0 -> KLispCons.createList(
+                                    KLispSymbol("list"),
+                                    KLispCons.createList(
+                                            KLispSymbol("cons"),
+                                            form.car().quote(),
+                                            expandQuasiQuote(form.cdr(), depth-1)
+                                    )
+                            )
+
+                            else -> KLispCons(KLispSymbol("append"),
+                                    form.cdr() as? KLispList ?: throw KLispException("Invalid unquote-splicing"))
+                        }
+                    }
+
+                    else -> KLispCons.createList(
+                            KLispSymbol("list"),
+                            KLispCons.createList(
+                                    KLispSymbol("append"),
+                                    expandQuasiQuoteList(form.car(), depth),
+                                    expandQuasiQuote(form.cdr(), depth)
+                            ))
+                }
+            } else {
+                KLispCons.createList(
+                        KLispSymbol("list"),
+                        KLispCons.createList(
+                                KLispSymbol("append"),
+                                expandQuasiQuoteList(form.car(), depth),
+                                expandQuasiQuote(form.cdr(), depth)
+                        ))
+            }
+        } else {
+            KLispCons.createList(form).quote()
+        }
     }
 
     fun add(symbol: KLispSymbol, value: KLispSexp) {

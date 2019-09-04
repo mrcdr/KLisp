@@ -2,6 +2,12 @@ package klisp
 
 class KLispReader(input: String) {
     companion object {
+        val QUOTE = "quote"
+        val QUASIQUOTE = "quasiquote"
+        val UNQUOTE = "unquote"
+        val UNQUOTE_SPLICE = "unquote-splice"
+
+
         val TOKEN_REGEX = Regex("""[\s]*(,@|[()'`,]|"(?:\\.|[^\\"])*"|;.*|[^\s()'`,";]*)""")
         // remove space; paren and reader macro |  string literal | comment | appearance
         val FRACTION_REGEX = Regex("""(^[+-]?[0-9]+(?:/[0-9]+)?$)""")
@@ -47,7 +53,10 @@ fun readAtom(reader: KLispReader): KLispSexp {
         KLispReader.FRACTION_REGEX.matches(token) -> KLispFraction(token)
         KLispReader.FLOAT_REGEX.matches(token) -> KLispDouble(token.toDouble())
         KLispReader.STRING_REGEX.matches(token) -> KLispString(token.substring(1, token.lastIndex)) // remove double quotes
-        token == "'" -> KLispCons.createList(listOf(KLispSymbol("quote"), readForm(reader)))
+        token == "'" -> KLispCons.createList(listOf(KLispSymbol(KLispReader.QUOTE), readForm(reader)))
+        token == "`" -> KLispCons.createList(listOf(KLispSymbol(KLispReader.QUASIQUOTE), readForm(reader)))
+        token == "," -> KLispCons.createList(listOf(KLispSymbol(KLispReader.UNQUOTE), readForm(reader)))
+        token == ",@" -> KLispCons.createList(listOf(KLispSymbol(KLispReader.UNQUOTE_SPLICE), readForm(reader)))
         KLispReader.SYMBOL_REGEX.matches(token) -> {
             when(token) {
                 KLispSymbol.T.toString() -> KLispSymbol.T

@@ -127,6 +127,20 @@ fun initEnv(): KLispEnv {
         }
     })
 
+    env.add(KLispSymbol("append"), object : KLispLambda() {
+        override fun invoke(args: KLispList): KLispSexp {
+            val concat = mutableListOf<KLispSexp>()
+
+            args.forEach { list ->
+                (list as? KLispList ?: throw KLispException("Not a list", "append")).forEach {
+                    concat.add(it)
+                }
+            }
+
+            return KLispCons.createList(concat)
+        }
+    })
+
     env.add(KLispSymbol("car"), object : KLispLambda() {
         override fun invoke(args: KLispList): KLispSexp {
             if(args.size() != 1) {

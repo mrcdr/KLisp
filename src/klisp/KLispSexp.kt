@@ -5,6 +5,7 @@ import kotlin.math.absoluteValue
 
 abstract class KLispSexp {
     abstract fun eval(env: KLispEnv): KLispSexp
+    fun quote() = KLispCons.createList(KLispSymbol(KLispReader.QUOTE), this)
 }
 
 abstract class KLispAtom(protected val appearance: String) : KLispSexp() {
@@ -253,6 +254,8 @@ open class KLispCons(private val car: KLispSexp, private val cdr: KLispSexp) : K
                 }
             }
         }
+
+        fun createList(vararg list: KLispSexp) = createList(list.toList())
     }
 
     override fun eval(env: KLispEnv): KLispSexp {
