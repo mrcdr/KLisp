@@ -3,7 +3,7 @@ package klisp
 class KLispEnv(private val symbolTable: MutableMap<KLispSymbol, KLispSexp>) {
     constructor() : this(mutableMapOf<KLispSymbol, KLispSexp>())
 
-    constructor(env: KLispEnv) : this(env.symbolTable)
+    constructor(env: KLispEnv) : this(env.symbolTable.toMutableMap()) // Copy the map
 
     constructor(env: KLispEnv, local_vars: List<KLispSymbol>, local_values: KLispList) : this(env) {
         for(i in 0 until local_vars.size) {
