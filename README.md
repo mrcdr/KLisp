@@ -1,11 +1,19 @@
 # KLisp
-Lisp interpreter written in Kotlin (under development)
+Lisp interpreter written in Kotlin
+
+## Usage
+Just run following:
+
+``` shell
+make
+kotlin klisp.jar  # or  java -jar klisp.jar
+```
 
 ## Spec
 
 - Lisp-1
 
-## Functions
+### Functions
 
 - eval
 - apply
@@ -19,7 +27,7 @@ Lisp interpreter written in Kotlin (under development)
 - atom?
 - quit
 
-## Special forms
+### Special forms
 
 - lambda
 - define
@@ -27,7 +35,7 @@ Lisp interpreter written in Kotlin (under development)
 - if
 - quote
 
-## Data types
+### Data types
 
 - symbol
 - number (fraction / floating point)
@@ -35,12 +43,12 @@ Lisp interpreter written in Kotlin (under development)
 - list
 - lambda
 
-## Special symbols
+### Special symbols
 
 - t (boolean true)
 - nil (boolean false and empty list)
 
-## Reader macros
+### Reader macros
 - ' (quote)
 - \` (quasiquote)
 - , (unquote)
